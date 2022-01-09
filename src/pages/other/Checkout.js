@@ -29,6 +29,7 @@ import { multilanguage } from "redux-multilanguage";
 
 
 const stripePromise = loadStripe(window._env_.APP_STRIPE_KEY);
+const codiPromise = window._env_.APP_CODI_KEY;
 const paymentForm = {
   firstName: {
     name: "firstName",
@@ -1192,6 +1193,51 @@ const Checkout = ({shipStateData, isLoading, currentLanguageCode, merchant, stri
                         window._env_.APP_PAYMENT_TYPE === 'STRIPE' &&
                         <div className="payment-method mt-25">
                           <Elements stripe={stripePromise} 
+                            options={{locale: currentLanguageCode}}
+                          >
+                            <ElementsConsumer>
+                              {({ stripe, elements }) => (
+                                <>
+                                  <div className="card-info">
+                                    <CardElement options={CARD_ELEMENT_OPTIONS} stripe={stripe} onReady={e => setRef(e)} />
+                                  </div>
+                                  <div className="icon-container">
+                                    <i className="fa fa-cc-visa" style={{ color: 'navy' }}></i>
+                                    <i className="fa fa-cc-amex" style={{ color: 'blue' }}></i>
+                                    <i className="fa fa-cc-mastercard" style={{ color: 'red' }}></i>
+                                  </div>
+
+                                  <div className="place-order mt-100">
+                                    <div className="login-toggle-btn mb-20">
+                                      <input type="checkbox" name={paymentForm.isAgree.name} ref={register(paymentForm.isAgree.validate)} onChange={onAgreement}/>
+                                      <label className="ml-10 ">{strings["I agree with the terms and conditions"]}</label>
+                                      {errors[paymentForm.isAgree.name] && <p className="error-msg">{errors[paymentForm.isAgree.name].message}</p>}
+                                    </div>
+                                    <div>
+                                      {
+                                          watch('isAgree') && 
+                                          <div className="agreement-info-wrap" dangerouslySetInnerHTML={{ __html: agreementData.replace(/>]]/g, "&gt;") }}>
+                                            {/* <textarea
+                                              readOnly={true}
+                                              name="message"
+                                              defaultValue={() => renderAgreementText(agreementData)}
+                                            /> */}
+                                          </div>
+                                      }
+                                    
+                                    </div>
+                                    <button type="button" onClick={handleSubmit((d) => onSubmitOrder(d, elements, stripe))} className="btn-hover">{strings["Place your order"]}</button>
+                                  </div>
+                                </>
+                              )}
+                            </ElementsConsumer>
+                          </Elements>
+                        </div>
+                      }
+                      {
+                        window._env_.APP_PAYMENT_TYPE === 'CODI' &&
+                        <div className="payment-method mt-25">
+                          <Elements stripe={codiPromise} 
                             options={{locale: currentLanguageCode}}
                           >
                             <ElementsConsumer>
