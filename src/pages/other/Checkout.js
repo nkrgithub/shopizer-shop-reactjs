@@ -25,11 +25,25 @@ import { setLoader } from "../../redux/actions/loaderActions";
 // } from "../../redux/actions/cartActions";
 import Script from 'react-load-script';
 import { multilanguage } from "redux-multilanguage";
-
+import Form from './Form.js';
 
 
 const stripePromise = loadStripe(window._env_.APP_STRIPE_KEY);
-const codiPromise = window._env_.APP_CODI_KEY;
+
+function validateCodiPaymentForm() {
+  var radios = document.getElementsByName("yesno");
+  var formValid = false;
+  console.log(formValid);
+  var i = 0;
+  while (!formValid && i < radios.length) {
+      if (radios[i].checked) formValid = true;
+      i++;        
+  }
+  console.log(formValid);
+  if (!formValid) alert("Must check some option!");
+  return formValid;
+}
+
 const paymentForm = {
   firstName: {
     name: "firstName",
@@ -243,6 +257,8 @@ const CARD_ELEMENT_OPTIONS = {
   }
 };
 const Checkout = ({shipStateData, isLoading, currentLanguageCode, merchant, strings, location, cartID, defaultStore,getShippingCountry, getState,getShippingState,  shipCountryData, stateData, currentLocation, userData, setLoader, deleteAllFromCart }) => {
+  console.log("ID CARRITO");
+  console.log(cartID);
   const { pathname } = location;
   const history = useHistory();
   const { addToast } = useToasts();
@@ -281,6 +297,8 @@ const Checkout = ({shipStateData, isLoading, currentLanguageCode, merchant, stri
   const getSummaryOrder = async () => {
     setLoader(true)
     console.log('GET SUMMARY')
+    console.log("ID CARRITO");
+    console.log(cartID);
     let action = constant.ACTION.CART + cartID + '?store=' + defaultStore;
     try {
       let response = await WebService.get(action);
@@ -610,6 +628,146 @@ const Checkout = ({shipStateData, isLoading, currentLanguageCode, merchant, stri
           "paymentType": "CREDITCARD",
           "transactionType": "CAPTURE",
           "paymentModule": "stripe",
+          "paymentToken": result.token,
+          "amount": shippingQuote[shippingQuote.length - 1].value
+        },
+        "customer": customer
+      }
+    }
+    // console.log(param);
+    // 
+    try {
+      let response = await WebService.post(action, param);
+      // console.log(response)
+      if (response) {
+        reset({})
+        ref.clear()
+        deleteAllFromCart(response.id)
+        setLocalData('order-email', data.email)
+        addToast("Your order has been submitted", { appearance: "success", autoDismiss: true });
+        history.push('/order-confirm')
+      }
+      setLoader(false)
+    } catch (error) {
+      if (isAccount) {
+        addToast("Registering customer already exist", { appearance: "error", autoDismiss: true });
+
+      } else {
+        addToast("Your order submission has been failed", { appearance: "error", autoDismiss: true });
+      }
+      setLoader(false)
+    }
+
+  }
+
+  //CODI
+  const onCodiSubmitOrder = async (data, elements) => {
+    setLoader(true)
+
+    if( !cartID ) {
+      history.push("/");
+    }
+    console.log("ID CARRITO");
+    console.log(cartID);
+    
+    let card = elements.getElement(CardElement);
+    // console.log(card);
+    // let ownerInfo = {
+    //   owner: {
+    //     name: data.firstName + ' ' + data.lastName,
+    //     phone: data.phone,
+    //     email: data.email
+    //   },
+    // };
+    const result = new Date().getTime();
+    // stripe.createSource(card, ownerInfo).then(function (result) {
+    if (!result) {
+      setLoader(false)
+      addToast(result.error.message, { appearance: "error", autoDismiss: true });
+    } else {
+      // console.log(result);
+      onCoDiPayment(data, result)
+    }
+    // });
+  }
+
+  const onCoDiPayment = async (data, result) => {
+    let action;
+
+    // console.log(data);
+    let param = {};
+    if (userData) {
+      action = constant.ACTION.AUTH + constant.ACTION.CART + cartID + '/' + constant.ACTION.CHECKOUT
+      param = {
+        "shippingQuote": selectedOptions,
+        "currency": merchant.currency,
+        "payment": {
+          "paymentType": "CODI",
+          "transactionType": "CAPTURE",
+          "paymentModule": "codi",
+          "paymentToken": result.token,
+          "amount": shippingQuote[shippingQuote.length - 1].value
+        }
+      }
+    } else {
+      action = constant.ACTION.CART + cartID + '/' + constant.ACTION.CHECKOUT
+      let customer = {};
+      if (isShipping) {
+        customer = {
+          "emailAddress": data.email,
+          "billing": {
+            "address": data.address,
+            // "company": data.company,
+            "city": data.city,
+            "postalCode": data.postalCode,
+            "country": data.country,
+            // "stateProvince": data.stateProvince,
+            "zone": data.stateProvince,
+            "firstName": data.firstName,
+            "lastName": data.lastName,
+            // "phone": data.phone
+          },
+          "delivery": {
+            "address": data.shipAddress,
+            // "company": data.shipCompany,
+            "city": data.shipCity,
+            "postalCode": data.shipPostalCode,
+            "country": data.shipCountry,
+            // "stateProvince": data.shipStateProvince,
+            "zone": data.shipStateProvince,
+            "firstName": data.shipFirstName,
+            "lastName": data.shipLastName,
+            // "phone": data.shipPhone
+          }
+        }
+      } else {
+        customer = {
+          "emailAddress": data.email,
+          "billing": {
+            "address": data.address,
+            // "company": data.company,
+            "city": data.city,
+            "postalCode": data.postalCode,
+            "country": data.country,
+            // "stateProvince": data.stateProvince,
+            "zone": data.stateProvince,
+            "firstName": data.firstName,
+            "lastName": data.lastName,
+            // "phone": data.phone
+          }
+        }
+      }
+      if (isAccount) {
+        customer['password'] = data.password;
+        customer['repeatPassword'] = data.repeatPassword;
+      }
+      param = {
+        "shippingQuote": selectedOptions,
+        "currency": merchant.currency,
+        "payment": {
+          "paymentType": "CODI",
+          "transactionType": "CAPTURE",
+          "paymentModule": "codi",
           "paymentToken": result.token,
           "amount": shippingQuote[shippingQuote.length - 1].value
         },
@@ -1235,51 +1393,6 @@ const Checkout = ({shipStateData, isLoading, currentLanguageCode, merchant, stri
                         </div>
                       }
                       {
-                        window._env_.APP_PAYMENT_TYPE === 'CODI' &&
-                        <div className="payment-method mt-25">
-                          <Elements stripe={codiPromise} 
-                            options={{locale: currentLanguageCode}}
-                          >
-                            <ElementsConsumer>
-                              {({ stripe, elements }) => (
-                                <>
-                                  <div className="card-info">
-                                    <CardElement options={CARD_ELEMENT_OPTIONS} stripe={stripe} onReady={e => setRef(e)} />
-                                  </div>
-                                  <div className="icon-container">
-                                    <i className="fa fa-cc-visa" style={{ color: 'navy' }}></i>
-                                    <i className="fa fa-cc-amex" style={{ color: 'blue' }}></i>
-                                    <i className="fa fa-cc-mastercard" style={{ color: 'red' }}></i>
-                                  </div>
-
-                                  <div className="place-order mt-100">
-                                    <div className="login-toggle-btn mb-20">
-                                      <input type="checkbox" name={paymentForm.isAgree.name} ref={register(paymentForm.isAgree.validate)} onChange={onAgreement}/>
-                                      <label className="ml-10 ">{strings["I agree with the terms and conditions"]}</label>
-                                      {errors[paymentForm.isAgree.name] && <p className="error-msg">{errors[paymentForm.isAgree.name].message}</p>}
-                                    </div>
-                                    <div>
-                                      {
-                                          watch('isAgree') && 
-                                          <div className="agreement-info-wrap" dangerouslySetInnerHTML={{ __html: agreementData.replace(/>]]/g, "&gt;") }}>
-                                            {/* <textarea
-                                              readOnly={true}
-                                              name="message"
-                                              defaultValue={() => renderAgreementText(agreementData)}
-                                            /> */}
-                                          </div>
-                                      }
-                                    
-                                    </div>
-                                    <button type="button" onClick={handleSubmit((d) => onSubmitOrder(d, elements, stripe))} className="btn-hover">{strings["Place your order"]}</button>
-                                  </div>
-                                </>
-                              )}
-                            </ElementsConsumer>
-                          </Elements>
-                        </div>
-                      }
-                      {
                         window._env_.APP_PAYMENT_TYPE === 'NUVEI' &&
                         <iframe title="Payment Page" height={"1150"} width="570" srcDoc='<form action="https://testpayments.nuvei.com/merchant/paymentpage" method="post">
                         <input type="hidden" name="TERMINALID" value="" />
@@ -1304,6 +1417,10 @@ const Checkout = ({shipStateData, isLoading, currentLanguageCode, merchant, stri
                         background: none;
                         background-color: #fb799c;"className="btn-hover">Pay now</button>
                       </form>'></iframe>
+                      }
+                      {
+                        window._env_.APP_PAYMENT_TYPE === 'CODI' &&
+                        <Form cart={cartID} total={cartItems.displayTotal}/>
                       }
                           </div>
                   </div>
