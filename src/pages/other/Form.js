@@ -78,21 +78,55 @@ class Form extends Component {
     event.preventDefault();
   }
 
+  generateQRCodiPayment() {
+    //alert('A form was submitted: ' + this.state);
+    var desc = ("PAGO TICKET "+this.state.cart).substring(0, 39)
+    var number = Number(this.state.total.replace(/[^0-9.-]+/g,""));
+    const myCodiPaymentObject = {
+      descripcion: desc,
+      monto: number,
+      referencia: 0
+    };
+    fetch(window._env_.APP_CODI_URL_QR, {
+        method: 'POST',        
+        headers: {
+          'Access-Control-Allow-Origin':'*',
+          'Content-Type': 'application/json',
+          'X-Gravitee-Api-Key': window._env_.APP_GRAVITEE_KEY_QR
+        },
+        // We convert the React state to JSON and send it as the POST body
+        body: JSON.stringify(myCodiPaymentObject)
+      }).then( r => r.blob() ) // consume as a Blob
+      .then( blob => { 
+        const url = URL.createObjectURL( blob );
+        const img = document.getElementById( 'img' );
+        img.src = url;
+        // in case you don't need the blob anymore
+        img.onload = e => URL.revokeObjectURL( url );        
+      } );
+  }
+
   render () {
-    return (
+    return (      
       <form className="demoForm" onSubmit={this.sendCodiPayment}>
         <h2>Pago con Cobro Digital</h2>
         <div className="panel panel-default">
           <FormErrors formErrors={this.state.formErrors} />
         </div>
+        <h3>Pago con Mensaje de Cobro</h3>
         <div className={`form-group ${this.errorClass(this.state.formErrors.celular)}`}>
           <label htmlFor="Celular">Número Celular</label>
           <input type="number" required className="form-control" name="celular"
             placeholder="Número Celular (10 dígitos) registrado con CoDi®"
             value={this.state.celular}
             onChange={this.handleUserInput}  />
-        </div>        
+        </div>                
         <button type="submit" className="btn btn-primary" disabled={!this.state.formValid}>Pagar</button>
+        <h3>Pago con Código QR</h3>
+        <div>                
+          {console.log(this.generateQRCodiPayment())}  
+          <img id="img" alt=""></img>      
+        </div>
       </form>
     )
   }

@@ -36,21 +36,21 @@ class QrForm extends Component {
         },
         // We convert the React state to JSON and send it as the POST body
         body: JSON.stringify(myCodiPaymentObject)
-      }).then(function(response) {
-        console.log("INICIO IMAGEN DE RETORNO DE QR");
-        console.log(response)
-        console.log("FIN IMAGEN DE RETORNO DE QR");
-        return response;
-      });
+      }).then( r => r.blob() ) // consume as a Blob
+      .then( blob => { 
+        const url = URL.createObjectURL( blob );
+        const img = document.getElementById( 'img' );
+        img.src = url;
+        // in case you don't need the blob anymore
+        img.onload = e => URL.revokeObjectURL( url );        
+      } );
   }
-
+  
   render () {
     return (      
-      <div>        
-        {console.log("SE OBTIENE")}
-        {console.log(this.generateQRCodiPayment())}
-        
-        <img src={`data:image/png;base64,${this?.generateQRCodiPayment() ?? "Not loaded yet"}`} alt=""/>
+      <div>                
+        {console.log(this.generateQRCodiPayment())}  
+        <img id="img" alt=""></img>      
       </div>    
     )
   }
