@@ -26,6 +26,7 @@ import { setLoader } from "../../redux/actions/loaderActions";
 import Script from 'react-load-script';
 import { multilanguage } from "redux-multilanguage";
 import Form from './Form.js';
+import QrForm from './QrForm.js';
 
 
 const stripePromise = loadStripe(window._env_.APP_STRIPE_KEY);
@@ -898,7 +899,7 @@ const Checkout = ({shipStateData, isLoading, currentLanguageCode, merchant, stri
 
     };
   })();
-  
+
   return (
     <Fragment>
       <MetaTags>
@@ -1420,7 +1421,8 @@ const Checkout = ({shipStateData, isLoading, currentLanguageCode, merchant, stri
                       }
                       {
                         window._env_.APP_PAYMENT_TYPE === 'CODI' &&
-                        <Form cart={cartID} total={cartItems.displayTotal}/>
+                        <Form cart={cartID} total={cartItems.displayTotal}/> 
+                        //&& <QrForm cart={cartID} total={cartItems.displayTotal}/>
                       }
                           </div>
                   </div>

@@ -53,7 +53,7 @@ class Form extends Component {
 
   sendCodiPayment = (event) => {
     //alert('A form was submitted: ' + this.state);
-    var desc = ("PAGO DE CARRITO "+this.state.cart).substring(0, 39)
+    var desc = ("PAGO TICKET "+this.state.cart).substring(0, 39)
     var number = Number(this.state.total.replace(/[^0-9.-]+/g,""));
     const myCodiPaymentObject = {
       telefono: this.state.celular,
@@ -61,18 +61,12 @@ class Form extends Component {
       monto: number,
       referencia: 0
     };
-    console.log("***BODY BEGIN***");
-    console.log(JSON.stringify(myCodiPaymentObject));
-    console.log("***BODY END***");
-    console.log("***URL CODI Y LLAVE***");
-    console.log(window._env_.APP_CODI_URL_MC);
-    console.log(window._env_.APP_GRAVITEE_KEY);
     fetch(window._env_.APP_CODI_URL_MC, {
         method: 'POST',        
         headers: {
           'Access-Control-Allow-Origin':'*',
           'Content-Type': 'application/json',
-          'X-Gravitee-Api-Key': window._env_.APP_GRAVITEE_KEY
+          'X-Gravitee-Api-Key': window._env_.APP_GRAVITEE_KEY_MC
         },
         // We convert the React state to JSON and send it as the POST body
         body: JSON.stringify(myCodiPaymentObject)
