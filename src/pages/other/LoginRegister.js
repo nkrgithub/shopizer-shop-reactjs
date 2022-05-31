@@ -22,10 +22,6 @@ import {
 import { addToCart, getCart } from "../../redux/actions/cartActions";
 import { connect } from "react-redux";
 import { multilanguage } from "redux-multilanguage";
-import { GoogleLogin, GoogleLogout } from "react-google-login";
-
-const clientId =
-  "85152609317-dk2v8hbg2r0ukr08tcjpgifvabi5r2uk.apps.googleusercontent.com";
 const loginForm = {
   username: {
     name: "username",
@@ -51,28 +47,6 @@ const loginForm = {
   },
 };
 const registerForm = {
-  userName: {
-    name: "userName",
-    validate: {
-      required: {
-        value: true,
-        message: "Username is required",
-      },
-    },
-  },
-  phoneNumber: {
-    name: "phoneNumber",
-    validate: {
-      required: {
-        value: true,
-        message: "Phone number is required",
-      },
-      pattern: {
-        value: /\+?\d[\d -]{8,12}\d/,
-        message: "Please enter the valid phone number",
-      },
-    },
-  },
   email: {
     name: "email",
     validate: {
@@ -353,26 +327,6 @@ const LoginRegister = ({
       setLoader(false);
     }
   };
-
-  const [showloginButton, setShowloginButton] = useState(true);
-  const [showlogoutButton, setShowlogoutButton] = useState(false);
-  const onLoginSuccess = (res) => {
-    console.log("Login Success:", res.profileObj);
-    setShowloginButton(false);
-    setShowlogoutButton(true);
-  };
-
-  const onLoginFailure = (res) => {
-    console.log("Login Failed:", res);
-  };
-
-  const onSignoutSuccess = () => {
-    alert("You have been logged out successfully");
-    console.clear();
-    setShowloginButton(true);
-    setShowlogoutButton(false);
-  };
-
   return (
     <Fragment>
       <MetaTags>
@@ -489,48 +443,11 @@ const LoginRegister = ({
                               </p>
                               <div className="login-input">
                                 <input
-                                  type="text"
-                                  name={registerForm.userName.name}
-                                  ref={register2(
-                                    registerForm.userName.validate,
-                                  )}
-                                  placeholder={strings["Username"]}
-                                />
-                                {errors2[registerForm.userName.name] && (
-                                  <p className="error-msg">
-                                    {
-                                      errors2[registerForm.userName.name]
-                                        .message
-                                    }
-                                  </p>
-                                )}
-                              </div>
-                              <div className="login-input">
-                                <input
-                                  type="text"
-                                  // autoComplete="Email"
-                                  name={registerForm.phoneNumber.name}
-                                  ref={register2(
-                                    registerForm.phoneNumber.validate,
-                                  )}
-                                  placeholder={strings["Phone"]}
-                                />
-                                {errors2[registerForm.phoneNumber.name] && (
-                                  <p className="error-msg">
-                                    {
-                                      errors2[registerForm.phoneNumber.name]
-                                        .message
-                                    }
-                                  </p>
-                                )}
-                              </div>
-                              <div className="login-input">
-                                <input
                                   type="email"
                                   autoComplete="Email"
                                   name={registerForm.email.name}
                                   ref={register2(registerForm.email.validate)}
-                                  placeholder={strings["Email address"]}
+                                  placeholder={strings["Username"]}
                                 />
                                 {errors2[registerForm.email.name] && (
                                   <p className="error-msg">
@@ -701,27 +618,6 @@ const LoginRegister = ({
                                 <button type="submit">
                                   <span>{strings["Register"]}</span>
                                 </button>
-                              </div>
-                              <span>OR</span>
-                              <div>
-                                {showloginButton ? (
-                                  <GoogleLogin
-                                    clientId={clientId}
-                                    buttonText="Sign In"
-                                    onSuccess={onLoginSuccess}
-                                    onFailure={onLoginFailure}
-                                    cookiePolicy={"single_host_origin"}
-                                    isSignedIn={true}
-                                  />
-                                ) : null}
-
-                                {showlogoutButton ? (
-                                  <GoogleLogout
-                                    clientId={clientId}
-                                    buttonText="Sign Out"
-                                    onLogoutSuccess={onSignoutSuccess}
-                                  ></GoogleLogout>
-                                ) : null}
                               </div>
                             </form>
                           </div>
