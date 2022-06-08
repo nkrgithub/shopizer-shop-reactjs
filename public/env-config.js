@@ -1,6 +1,6 @@
 window._env_ = {
   APP_PRODUCTION: "false",
-  APP_BASE_URL: "http://aws-demo.shopizer.com:8080",
+  APP_BASE_URL: "http://192.168.1.222:8080",
   APP_API_VERSION: "/api/v1/",
   APP_MERCHANT: "DEFAULT",
   APP_PRODUCT_GRID_LIMIT: "4",
