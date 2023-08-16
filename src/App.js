@@ -77,7 +77,6 @@ const App = (props) => {
     <ToastProvider placement="bottom-left">
       <BreadcrumbsProvider>
         <Router>
-
           <Loader></Loader>
           <Cookie></Cookie>
           <ScrollToTop>
