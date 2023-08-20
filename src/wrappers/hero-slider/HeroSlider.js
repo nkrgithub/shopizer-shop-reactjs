@@ -5,7 +5,6 @@ import { multilanguage } from "redux-multilanguage";
 import { connect } from 'react-redux';
 
 const HeroSlider = ({ string }) => {
-
   return (
     <div className="site-blocks-cover">
       <div className="container">
@@ -17,12 +16,9 @@ const HeroSlider = ({ string }) => {
       </div>
     </div>
   );
-
-
 };
 
 const mapStateToProps = state => {
-
   return {
     currentLanguageCode: state.multilanguage.currentLanguageCode,
     defaultStore: state.merchantData.defaultStore,

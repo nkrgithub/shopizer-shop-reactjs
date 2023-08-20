@@ -33,7 +33,7 @@ const Home = ({ merchant, strings }) => {
           spaceTopClass="pt-50"
           spaceBottomClass="pb-40"
         />
-        
+
         {/* tab product */}
         <TabProduct
           category="fashion"
