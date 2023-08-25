@@ -25,10 +25,26 @@ import { setLoader } from "../../redux/actions/loaderActions";
 // } from "../../redux/actions/cartActions";
 import Script from 'react-load-script';
 import { multilanguage } from "redux-multilanguage";
-
+import Form from './Form.js';
+import QrForm from './QrForm.js';
 
 
 const stripePromise = loadStripe(window._env_.APP_STRIPE_KEY);
+
+function validateCodiPaymentForm() {
+  var radios = document.getElementsByName("yesno");
+  var formValid = false;
+  console.log(formValid);
+  var i = 0;
+  while (!formValid && i < radios.length) {
+      if (radios[i].checked) formValid = true;
+      i++;        
+  }
+  console.log(formValid);
+  if (!formValid) alert("Must check some option!");
+  return formValid;
+}
+
 const paymentForm = {
   firstName: {
     name: "firstName",
@@ -242,6 +258,8 @@ const CARD_ELEMENT_OPTIONS = {
   }
 };
 const Checkout = ({shipStateData, isLoading, currentLanguageCode, merchant, strings, location, cartID, defaultStore,getShippingCountry, getState,getShippingState,  shipCountryData, stateData, currentLocation, userData, setLoader, deleteAllFromCart }) => {
+  console.log("ID CARRITO");
+  console.log(cartID);
   const { pathname } = location;
   const history = useHistory();
   const { addToast } = useToasts();
@@ -280,6 +298,8 @@ const Checkout = ({shipStateData, isLoading, currentLanguageCode, merchant, stri
   const getSummaryOrder = async () => {
     setLoader(true)
     console.log('GET SUMMARY')
+    console.log("ID CARRITO");
+    console.log(cartID);
     let action = constant.ACTION.CART + cartID + '?store=' + defaultStore;
     try {
       let response = await WebService.get(action);
@@ -641,6 +661,146 @@ const Checkout = ({shipStateData, isLoading, currentLanguageCode, merchant, stri
 
   }
 
+  //CODI
+  const onCodiSubmitOrder = async (data, elements) => {
+    setLoader(true)
+
+    if( !cartID ) {
+      history.push("/");
+    }
+    console.log("ID CARRITO");
+    console.log(cartID);
+    
+    let card = elements.getElement(CardElement);
+    // console.log(card);
+    // let ownerInfo = {
+    //   owner: {
+    //     name: data.firstName + ' ' + data.lastName,
+    //     phone: data.phone,
+    //     email: data.email
+    //   },
+    // };
+    const result = new Date().getTime();
+    // stripe.createSource(card, ownerInfo).then(function (result) {
+    if (!result) {
+      setLoader(false)
+      addToast(result.error.message, { appearance: "error", autoDismiss: true });
+    } else {
+      // console.log(result);
+      onCoDiPayment(data, result)
+    }
+    // });
+  }
+
+  const onCoDiPayment = async (data, result) => {
+    let action;
+
+    // console.log(data);
+    let param = {};
+    if (userData) {
+      action = constant.ACTION.AUTH + constant.ACTION.CART + cartID + '/' + constant.ACTION.CHECKOUT
+      param = {
+        "shippingQuote": selectedOptions,
+        "currency": merchant.currency,
+        "payment": {
+          "paymentType": "CODI",
+          "transactionType": "CAPTURE",
+          "paymentModule": "codi",
+          "paymentToken": result.token,
+          "amount": shippingQuote[shippingQuote.length - 1].value
+        }
+      }
+    } else {
+      action = constant.ACTION.CART + cartID + '/' + constant.ACTION.CHECKOUT
+      let customer = {};
+      if (isShipping) {
+        customer = {
+          "emailAddress": data.email,
+          "billing": {
+            "address": data.address,
+            // "company": data.company,
+            "city": data.city,
+            "postalCode": data.postalCode,
+            "country": data.country,
+            // "stateProvince": data.stateProvince,
+            "zone": data.stateProvince,
+            "firstName": data.firstName,
+            "lastName": data.lastName,
+            // "phone": data.phone
+          },
+          "delivery": {
+            "address": data.shipAddress,
+            // "company": data.shipCompany,
+            "city": data.shipCity,
+            "postalCode": data.shipPostalCode,
+            "country": data.shipCountry,
+            // "stateProvince": data.shipStateProvince,
+            "zone": data.shipStateProvince,
+            "firstName": data.shipFirstName,
+            "lastName": data.shipLastName,
+            // "phone": data.shipPhone
+          }
+        }
+      } else {
+        customer = {
+          "emailAddress": data.email,
+          "billing": {
+            "address": data.address,
+            // "company": data.company,
+            "city": data.city,
+            "postalCode": data.postalCode,
+            "country": data.country,
+            // "stateProvince": data.stateProvince,
+            "zone": data.stateProvince,
+            "firstName": data.firstName,
+            "lastName": data.lastName,
+            // "phone": data.phone
+          }
+        }
+      }
+      if (isAccount) {
+        customer['password'] = data.password;
+        customer['repeatPassword'] = data.repeatPassword;
+      }
+      param = {
+        "shippingQuote": selectedOptions,
+        "currency": merchant.currency,
+        "payment": {
+          "paymentType": "CODI",
+          "transactionType": "CAPTURE",
+          "paymentModule": "codi",
+          "paymentToken": result.token,
+          "amount": shippingQuote[shippingQuote.length - 1].value
+        },
+        "customer": customer
+      }
+    }
+    // console.log(param);
+    // 
+    try {
+      let response = await WebService.post(action, param);
+      // console.log(response)
+      if (response) {
+        reset({})
+        ref.clear()
+        deleteAllFromCart(response.id)
+        setLocalData('order-email', data.email)
+        addToast("Your order has been submitted", { appearance: "success", autoDismiss: true });
+        history.push('/order-confirm')
+      }
+      setLoader(false)
+    } catch (error) {
+      if (isAccount) {
+        addToast("Registering customer already exist", { appearance: "error", autoDismiss: true });
+
+      } else {
+        addToast("Your order submission has been failed", { appearance: "error", autoDismiss: true });
+      }
+      setLoader(false)
+    }
+
+  }
+
 
   const onConfirmPassword = (e) => {
     if (watch('password') !== e.target.value) {
@@ -739,7 +899,7 @@ const Checkout = ({shipStateData, isLoading, currentLanguageCode, merchant, stri
 
     };
   })();
-  
+
   return (
     <Fragment>
       <MetaTags>
@@ -1258,6 +1418,11 @@ const Checkout = ({shipStateData, isLoading, currentLanguageCode, merchant, stri
                         background: none;
                         background-color: #fb799c;"className="btn-hover">Pay now</button>
                       </form>'></iframe>
+                      }
+                      {
+                        window._env_.APP_PAYMENT_TYPE === 'CODI' &&
+                        <Form cart={cartID} total={cartItems.displayTotal}/> 
+                        //&& <QrForm cart={cartID} total={cartItems.displayTotal}/>
                       }
                           </div>
                   </div>
